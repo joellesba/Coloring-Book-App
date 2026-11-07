@@ -1,0 +1,8 @@
+{
+  "appId": "com.joellesba.toddlercoloringbook",
+  "appName": "Toddler Coloring Book",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
