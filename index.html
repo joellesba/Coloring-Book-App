@@ -45,13 +45,12 @@ button{border:3px solid #ddd;background:#fff;border-radius:50%;padding:0;cursor:
   <button class="s on" data-r="0.026" aria-label="Medium"><i style="width:18px;height:18px"></i></button>
   <button class="s" data-r="0.05" aria-label="Large"><i style="width:32px;height:32px"></i></button>
   <button class="tool" id="erase" aria-label="Eraser">🧽</button>
-  <button class="tool" id="clear" aria-label="Clear page">🗑️</button>
 </div>
 <div id="main"><div id="box"><canvas id="paint"></canvas><canvas id="line"></canvas></div></div>
 <div class="bar" id="right"></div>
 <div id="pick"><button id="x" aria-label="Close">✕</button><div id="grid"></div></div>
 <script>
-const COLORS=['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa','#000000','#ffffff'];
+const COLORS=['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa','#000000'];
 // Pictures drawn in 0..1 coordinates; every shape is closed so paint stays inside it.
 const ell=(c,x,y,rx,ry)=>{c.moveTo(x+rx,y);c.ellipse(x,y,rx,ry,0,0,7)};
 const poly=(c,p)=>{c.moveTo(p[0][0],p[0][1]);p.slice(1).forEach(q=>c.lineTo(q[0],q[1]));c.closePath()};
@@ -167,7 +166,7 @@ Umbrella|e50 45 40 32;l50 77 50 88 44 92
 Gift|r20 45 60 40;r15 35 70 10;r47 35 6 50;e40 25 10 8;e60 25 10 8
 Kite|p50 8 78 45 50 82 22 45;l50 82 45 92 55 98 45 100;l50 8 50 82;l22 45 78 45
 Lighthouse|p38 85 62 85 56 28 44 28;r42 15 16 13;p40 15 50 4 60 15;l40 55 60 55`;
-PICS.push(...D.trim().split('\n').map(l=>{const[n,s]=l.split('|');return{n,d:dsl(s)}}),{n:'Blank page',d(){}});
+PICS.unshift({n:'Blank page',d(){}}, ...D.trim().split('\n').map(l=>{const[n,s]=l.split('|');return{n,d:dsl(s)}}));
 let W=0,H=0,P=0,paintCtx,paintImg,lineCtx,color=COLORS[0],rad=.026,region=0,last=null,cur=0;
 const box=document.getElementById('box'),paint=document.getElementById('paint'),line=document.getElementById('line');
 function drawPic(ctx,i,size,ox=0,oy=0){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.save();ctx.translate(ox,oy);ctx.scale(size,size);ctx.lineWidth=.014;ctx.lineJoin=ctx.lineCap='round';
@@ -210,7 +209,6 @@ const right=document.getElementById('right');let erase=false;
 COLORS.forEach((c,i)=>{const b=document.createElement('button');b.className='c'+(i?'':' on');b.style.background=c;b.setAttribute('aria-label',c);
   b.onclick=()=>{color=c;erase=false;document.getElementById('erase').classList.remove('on');right.querySelectorAll('.c').forEach(x=>x.classList.remove('on'));b.classList.add('on')};right.appendChild(b)});
 document.querySelectorAll('.s').forEach(b=>b.onclick=()=>{rad=+b.dataset.r;document.querySelectorAll('.s').forEach(x=>x.classList.remove('on'));b.classList.add('on')});
-document.getElementById('clear').onclick=()=>load(cur);
 document.getElementById('erase').onclick=e=>{erase=!erase;e.currentTarget.classList.toggle('on',erase);right.querySelectorAll('.c').forEach(x=>x.classList.toggle('on',!erase&&x.getAttribute('aria-label')===color))};
 const pick=document.getElementById('pick'),grid=document.getElementById('grid');
 PICS.forEach((p,i)=>{const b=document.createElement('button');const c=document.createElement('canvas');c.width=c.height=150;drawPic(c.getContext('2d'),i,150);
@@ -221,7 +219,9 @@ document.getElementById('x').onclick=()=>pick.classList.remove('show');
 ['contextmenu','gesturestart','gesturechange','dragstart','selectstart'].forEach(t=>document.addEventListener(t,e=>e.preventDefault()));
 document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
 // Offline support, so it keeps working with no connection.
-if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Offline setup failed:',err)));
+}
 let rz;
 addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{
   const m=document.getElementById('main'),dpr=Math.min(window.devicePixelRatio||1,1.5);
